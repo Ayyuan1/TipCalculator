@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="baby_blue">#B7D0E0</color>
+    <color name="color_best_tip">#35BA01</color>
+    <color name="color_worst_tip">#DC1E0B</color>
+</resources>
