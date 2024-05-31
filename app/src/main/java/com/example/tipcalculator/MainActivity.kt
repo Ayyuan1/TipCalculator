@@ -1,13 +1,14 @@
 package com.example.tipcalculator
 
 import android.animation.ArgbEvaluator
-import android.app.Application
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
@@ -36,18 +37,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvSplitTotalAmount: TextView
     private lateinit var buttonRoundUp: Button
     private lateinit var buttonRoundDown: Button
-
+    private lateinit var btSettings: ImageButton
 
 
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        class MyApp : Application() {
-            override fun onCreate() {
-                super.onCreate()
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-            }
-        }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
@@ -63,6 +58,14 @@ class MainActivity : AppCompatActivity() {
         tvSplitTotalAmount = findViewById(R.id.tvSplitTotalAmount)
         buttonRoundUp = findViewById(R.id.buttonRoundUp)
         buttonRoundDown = findViewById(R.id.buttonRoundDown)
+        btSettings = findViewById(R.id.btSettings)
+
+        btSettings.setOnClickListener{
+            val intent = Intent(this, SettingsActivity::class.java)
+            startActivity(intent)
+        }
+
+        initializeTheme()
 
         seekbarSplit.progress = INITIAL_SPLIT_NUM
         tvSplitNumber.text = "1"
@@ -103,11 +106,11 @@ class MainActivity : AppCompatActivity() {
 
         })
 
-        buttonRoundUp.setOnClickListener(){
+        buttonRoundUp.setOnClickListener{
             roundUp()
         }
 
-        buttonRoundDown.setOnClickListener(){
+        buttonRoundDown.setOnClickListener{
             roundDown()
         }
 
@@ -210,5 +213,13 @@ class MainActivity : AppCompatActivity() {
         tvTotalAmount.text = "%.2f".format(totalAmount)
     }
 
-
+    private fun initializeTheme() {
+        val sharedPreferences = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this)
+        val themePref = sharedPreferences.getString("theme_preference", "follow_system")
+        when (themePref) {
+            "light" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            "dark" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            "follow_system" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        }
+    }
 }
