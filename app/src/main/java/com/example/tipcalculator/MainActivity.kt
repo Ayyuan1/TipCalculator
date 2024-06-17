@@ -1,16 +1,19 @@
 package com.example.tipcalculator
 
 import android.animation.ArgbEvaluator
-import android.app.Application
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
@@ -23,6 +26,7 @@ import kotlin.math.floor
 private  const val TAG = "MainActivity"
 private  const val  INITIAL_TIP_PERCENT = 15
 private const val INITIAL_SPLIT_NUM = 1
+private const val SPLIT_MIN = 1
 class MainActivity : AppCompatActivity() {
     private lateinit var etBaseAmount: EditText
     private lateinit var seekBarTip: SeekBar
@@ -30,24 +34,22 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvTipPercentLabel: TextView
     private lateinit var tvTipAmount: TextView
     private lateinit var tvTotalAmount: TextView
-    private lateinit var tvTipDescription: TextView
     private lateinit var tvSplitNumber: TextView
     private lateinit var tvSplitTipAmount: TextView
     private lateinit var tvSplitTotalAmount: TextView
     private lateinit var buttonRoundUp: Button
     private lateinit var buttonRoundDown: Button
+    private lateinit var btSettings: ImageButton
+    private lateinit var btPreset15: Button
+    private lateinit var btPreset18: Button
+    private lateinit var btPreset20: Button
+    private lateinit var btPreset23: Button
 
 
 
 
-
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
-        class MyApp : Application() {
-            override fun onCreate() {
-                super.onCreate()
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-            }
-        }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
@@ -56,16 +58,50 @@ class MainActivity : AppCompatActivity() {
         tvTipPercentLabel = findViewById(R.id.tvTipPercentLabel)
         tvTipAmount = findViewById(R.id.tvTipAmount)
         tvTotalAmount = findViewById(R.id.tvTotalAmount)
-        tvTipDescription = findViewById(R.id.tvTipDescription)
+
         seekbarSplit = findViewById(R.id.seekBarSplit)
         tvSplitNumber = findViewById(R.id.tvSplitNumber)
         tvSplitTipAmount = findViewById(R.id.tvSplitTipAmount)
         tvSplitTotalAmount = findViewById(R.id.tvSplitTotalAmount)
         buttonRoundUp = findViewById(R.id.buttonRoundUp)
         buttonRoundDown = findViewById(R.id.buttonRoundDown)
+        btSettings = findViewById(R.id.btSettings)
+        btPreset15 = findViewById(R.id.btPreset15)
+        btPreset18 = findViewById(R.id.btPreset18)
+        btPreset20 = findViewById(R.id.btPreset20)
+        btPreset23 = findViewById(R.id.btPreset23)
 
+        btSettings.setOnClickListener{
+            val intent = Intent(this, SettingsActivity::class.java)
+            startActivity(intent)
+        }
+
+        btPreset15.setOnClickListener{
+            seekBarTip.progress = 15
+            computeTipAndTotal()
+        }
+
+        btPreset18.setOnClickListener{
+            seekBarTip.progress = 18
+            computeTipAndTotal()
+        }
+
+        btPreset20.setOnClickListener{
+            seekBarTip.progress = 20
+            computeTipAndTotal()
+        }
+
+        btPreset23.setOnClickListener{
+            seekBarTip.progress = 23
+            computeTipAndTotal()
+        }
+
+        initializeTheme()
+
+        seekbarSplit.min = SPLIT_MIN
         seekbarSplit.progress = INITIAL_SPLIT_NUM
         tvSplitNumber.text = "1"
+
         seekbarSplit.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener{
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 Log.i(TAG, "onProgressChanged $progress")
@@ -78,14 +114,12 @@ class MainActivity : AppCompatActivity() {
 
         seekBarTip.progress = INITIAL_TIP_PERCENT
         tvTipPercentLabel.text = "$INITIAL_TIP_PERCENT%"
-        updateTipDescription(INITIAL_TIP_PERCENT)
         seekBarTip.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener{
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 Log.i(TAG, "onProgressChanged $progress")
                 tvTipPercentLabel.text = "$progress%"
                 computeTipAndTotal()
                 computeSplitTipAndTotal()
-                updateTipDescription(progress)
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
@@ -103,11 +137,11 @@ class MainActivity : AppCompatActivity() {
 
         })
 
-        buttonRoundUp.setOnClickListener(){
+        buttonRoundUp.setOnClickListener{
             roundUp()
         }
 
-        buttonRoundDown.setOnClickListener(){
+        buttonRoundDown.setOnClickListener{
             roundDown()
         }
 
@@ -175,24 +209,6 @@ class MainActivity : AppCompatActivity() {
         tvSplitTotalAmount.text = "%.2f".format(splitTotalAmount)
     }
 
-    private fun updateTipDescription(tipPercent: Int) {
-        val tipDescription = when (tipPercent) {
-            in 0..9 -> "Poor"
-            in 10..14 -> "Acceptable"
-            in 15..19 -> "Good"
-            in 20..24 -> "Great"
-            else -> "Amazing"
-        }
-        tvTipDescription.text = tipDescription
-
-        val color = ArgbEvaluator().evaluate(
-            tipPercent.toFloat() / seekBarTip.max,
-            ContextCompat.getColor(this, R.color.color_worst_tip),
-            ContextCompat.getColor(this, R.color.color_best_tip)
-        ) as Int
-        tvTipDescription.setTextColor(color)
-    }
-
     private fun computeTipAndTotal(){
         if (etBaseAmount.text.isEmpty()) {
             tvTipAmount.text = ""
@@ -210,5 +226,13 @@ class MainActivity : AppCompatActivity() {
         tvTotalAmount.text = "%.2f".format(totalAmount)
     }
 
-
+    private fun initializeTheme() {
+        val sharedPreferences = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this)
+        val themePref = sharedPreferences.getString("theme_preference", "follow_system")
+        when (themePref) {
+            "light" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            "dark" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            "follow_system" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        }
+    }
 }
