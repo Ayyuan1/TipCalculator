@@ -101,6 +101,7 @@ class MainActivity : AppCompatActivity() {
         seekbarSplit.min = SPLIT_MIN
         seekbarSplit.progress = INITIAL_SPLIT_NUM
         tvSplitNumber.text = "1"
+
         seekbarSplit.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener{
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 Log.i(TAG, "onProgressChanged $progress")
